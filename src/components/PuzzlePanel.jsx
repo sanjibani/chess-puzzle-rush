@@ -22,6 +22,8 @@ export default function PuzzlePanel({
   onSetReviewStep,
   onReport,
   reportedPuzzles,
+  onPrev,
+  hasPrevPuzzle,
 }) {
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
@@ -204,16 +206,16 @@ export default function PuzzlePanel({
         )}
 
         {(status === "completed" || status === "wrong") && (
-          <>
-            <button className="btn btn-next" onClick={onNext}>
-              Next Puzzle &rarr;
-            </button>
-            {status === "wrong" && (
-              <button className="btn btn-retry" onClick={onRetry}>
-                Retry
+          <div className="nav-buttons-row">
+            {hasPrevPuzzle && (
+              <button className="btn btn-prev" onClick={onPrev} title="Previous puzzle">
+                &larr;
               </button>
             )}
-          </>
+            <button className="btn btn-next" onClick={onNext} style={{ flex: 1 }}>
+              Next Puzzle &rarr;
+            </button>
+          </div>
         )}
 
         {puzzle && (status === "completed" || status === "wrong") && (

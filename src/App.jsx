@@ -36,6 +36,8 @@ export default function App() {
     setReviewStep,
     reportPuzzle,
     reportedPuzzles,
+    prevPuzzle,
+    hasPrevPuzzle,
   } = usePuzzle();
 
   const [showStats, setShowStats] = useState(false);
@@ -125,6 +127,8 @@ export default function App() {
             onSetReviewStep={setReviewStep}
             onReport={reportPuzzle}
             reportedPuzzles={reportedPuzzles}
+            onPrev={prevPuzzle}
+            hasPrevPuzzle={hasPrevPuzzle}
           />
         </div>
 

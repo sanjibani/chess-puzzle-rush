@@ -118,7 +118,9 @@ export function usePuzzle() {
   const [difficulty, setDifficulty] = useStorage("chess_puzzle_difficulty", "all");
   const [timer, setTimer] = useState(0);
   const timerRef = useRef(null);
+  const autoAdvanceRef = useRef(null);
   const [puzzleQueue, setPuzzleQueue] = useState([]);
+  const [puzzleHistory, setPuzzleHistory] = useState([]);
 
   // Solution review state
   const [solutionSteps, setSolutionSteps] = useState([]);
@@ -157,6 +159,14 @@ export function usePuzzle() {
 
       try {
         const chess = new Chess(nextPuzzle.fen);
+        // Track history (don't add if retrying the same puzzle)
+        if (puzzle && puzzle.id !== nextPuzzle.id) {
+          setPuzzleHistory((prev) => [...prev.slice(-20), puzzle]);
+        }
+        if (autoAdvanceRef.current) {
+          clearTimeout(autoAdvanceRef.current);
+          autoAdvanceRef.current = null;
+        }
         setGame(chess);
         setPuzzle(nextPuzzle);
         setMoveIndex(0);
@@ -197,6 +207,7 @@ export function usePuzzle() {
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
     };
   }, []);
 
@@ -250,14 +261,22 @@ export function usePuzzle() {
             playCompletedSound();
           }
         }
+        // Auto-advance to next puzzle after 2s
+        autoAdvanceRef.current = setTimeout(() => {
+          loadPuzzle();
+        }, 2000);
       } else {
         setStatus("wrong");
         // Open review at step 0 (start) so user can step through
         setReviewStep(0);
         if (soundEnabled) playWrongSound();
+        // Auto-retry after 2s
+        autoAdvanceRef.current = setTimeout(() => {
+          if (puzzle) loadPuzzle(puzzle);
+        }, 2000);
       }
     },
-    [rating, puzzle, stats, hintsUsed, soundEnabled, setRating, setStats]
+    [rating, puzzle, stats, hintsUsed, soundEnabled, setRating, setStats, loadPuzzle]
   );
 
   const makeMove = useCallback(
@@ -362,46 +381,81 @@ export function usePuzzle() {
     // Mark as failed (stops timer, updates rating/stats, sets reviewStep=0)
     completePuzzle(false);
 
-    // Animate through solutionSteps by advancing reviewStep every 650ms.
-    // We use a local counter so the closure is stable; solutionSteps is
-    // already fully computed for this puzzle.
+    // Cancel the auto-retry that completePuzzle just set — we'll set our own
+    // after the animation finishes
+    if (autoAdvanceRef.current) {
+      clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = null;
+    }
+
     let step = 0;
-    const totalSteps = puzzle.moves.length; // number of moves to show
+    const totalSteps = puzzle.moves.length;
 
     const advance = () => {
-      if (step >= totalSteps) return;
+      if (step >= totalSteps) {
+        // Animation done — auto-retry after 1.5s
+        autoAdvanceRef.current = setTimeout(() => {
+          if (puzzle) loadPuzzle(puzzle);
+        }, 1500);
+        return;
+      }
       step++;
       setReviewStep(step);
-      if (soundEnabled) {
-        if (step % 2 === 1) playMoveSound(); // player moves
-        else playMoveSound();
-      }
+      if (soundEnabled) playMoveSound();
       setTimeout(advance, 650);
     };
 
-    // Small delay to let completePuzzle's state updates flush first
     setTimeout(advance, 200);
-  }, [puzzle, status, soundEnabled, completePuzzle, setReviewStep]);
+  }, [puzzle, status, soundEnabled, completePuzzle, setReviewStep, loadPuzzle]);
+
+  // Cancel auto-advance when user interacts with solution review
+  const cancelAutoAdvance = useCallback(() => {
+    if (autoAdvanceRef.current) {
+      clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = null;
+    }
+  }, []);
 
   // Step forward through solution
   const stepForward = useCallback(() => {
     if (reviewStep === null) return;
+    cancelAutoAdvance();
     setReviewStep((s) => Math.min(s + 1, solutionSteps.length - 1));
-  }, [reviewStep, solutionSteps.length]);
+  }, [reviewStep, solutionSteps.length, cancelAutoAdvance]);
 
   // Step backward through solution
   const stepBack = useCallback(() => {
     if (reviewStep === null) return;
+    cancelAutoAdvance();
     setReviewStep((s) => Math.max(s - 1, 0));
-  }, [reviewStep]);
+  }, [reviewStep, cancelAutoAdvance]);
 
   const nextPuzzle = useCallback(() => {
+    if (autoAdvanceRef.current) {
+      clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = null;
+    }
     loadPuzzle();
   }, [loadPuzzle]);
 
   const retryPuzzle = useCallback(() => {
+    if (autoAdvanceRef.current) {
+      clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = null;
+    }
     if (puzzle) loadPuzzle(puzzle);
   }, [puzzle, loadPuzzle]);
+
+  const prevPuzzle = useCallback(() => {
+    if (autoAdvanceRef.current) {
+      clearTimeout(autoAdvanceRef.current);
+      autoAdvanceRef.current = null;
+    }
+    if (puzzleHistory.length === 0) return;
+    const prev = puzzleHistory[puzzleHistory.length - 1];
+    setPuzzleHistory((h) => h.slice(0, -1));
+    loadPuzzle(prev);
+  }, [puzzleHistory, loadPuzzle]);
 
   const playerColor = puzzle
     ? new Chess(puzzle.fen).turn() === "w"
@@ -476,6 +530,7 @@ export function usePuzzle() {
     solutionSteps,
     reviewStep,
     reportedPuzzles,
+    hasPrevPuzzle: puzzleHistory.length > 0,
 
     makeMove,
     showHint,
@@ -489,5 +544,6 @@ export function usePuzzle() {
     stepBack,
     setReviewStep,
     reportPuzzle,
+    prevPuzzle,
   };
 }
