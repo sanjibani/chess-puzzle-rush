@@ -1,6 +1,30 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
+
+// Chess.com "neo" piece set — the exact pieces used on chess.com
+const PIECE_CDN = "https://images.chesscomfiles.com/chess-themes/pieces/neo/300";
+
+function makePieces() {
+  const codes = ["wK","wQ","wR","wB","wN","wP","bK","bQ","bR","bB","bN","bP"];
+  const pieces = {};
+  codes.forEach((key) => {
+    const file = key.toLowerCase(); // wK -> wk, bQ -> bq
+    pieces[key] = ({ squareWidth }) => (
+      <img
+        src={`${PIECE_CDN}/${file}.png`}
+        alt={key}
+        style={{
+          width: squareWidth,
+          height: squareWidth,
+          objectFit: "contain",
+          pointerEvents: "none",
+        }}
+      />
+    );
+  });
+  return pieces;
+}
 
 function useBoardSize() {
   const [size, setSize] = useState(() => Math.min(560, window.innerWidth - 40));
@@ -23,6 +47,7 @@ export default function Board({
   const [moveFrom, setMoveFrom] = useState(null);
   const [optionSquares, setOptionSquares] = useState({});
   const boardSize = useBoardSize();
+  const customPieces = useMemo(() => makePieces(), []);
 
   const boardOrientation = playerColor;
   const isPlayable = status === "playing";
@@ -161,6 +186,7 @@ export default function Board({
           customDropSquareStyle={{
             boxShadow: "inset 0 0 2px 6px rgba(255,255,255,0.25)",
           }}
+          customPieces={customPieces}
           areCoordinatesShown={true}
           customNotationStyle={{
             fontSize: "11px",
