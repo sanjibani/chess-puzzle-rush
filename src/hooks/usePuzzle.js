@@ -129,8 +129,8 @@ export function usePuzzle() {
   const getFilteredPuzzles = useCallback(() => {
     if (difficulty === "all") return validPuzzles;
     const ranges = {
-      beginner: [0, 800],
-      intermediate: [800, 1300],
+      beginner: [0, 1000],
+      intermediate: [1000, 1400],
       advanced: [1300, 1800],
       expert: [1800, 3000],
     };
