@@ -155,8 +155,8 @@ export default function Board({
             boxShadow:
               "0 0 0 2px #1a1a1a, 0 0 0 4px #3a3a3a, 0 8px 32px rgba(0,0,0,0.7)",
           }}
-          customDarkSquareStyle={{ backgroundColor: "#5a7fa8" }}
-          customLightSquareStyle={{ backgroundColor: "#dce8f0" }}
+          customDarkSquareStyle={{ backgroundColor: "#779952" }}
+          customLightSquareStyle={{ backgroundColor: "#EEEED2" }}
           customSquareStyles={customSquareStyles}
           customDropSquareStyle={{
             boxShadow: "inset 0 0 2px 6px rgba(255,255,255,0.25)",
