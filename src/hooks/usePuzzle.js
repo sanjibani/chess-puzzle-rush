@@ -104,6 +104,7 @@ export function usePuzzle() {
     today: { date: new Date().toDateString(), solved: 0, attempted: 0 },
   });
   const [soundEnabled, setSoundEnabled] = useStorage("chess_puzzle_sound", true);
+  const [reportedPuzzles, setReportedPuzzles] = useStorage("chess_puzzle_reported", []);
 
   // Session state
   const [game, setGame] = useState(null);
@@ -447,6 +448,16 @@ export function usePuzzle() {
       ? game.fen()
       : null;
 
+  const reportPuzzle = useCallback(
+    (puzzleId) => {
+      setReportedPuzzles((prev) => {
+        if (prev.includes(puzzleId)) return prev;
+        return [...prev, puzzleId];
+      });
+    },
+    [setReportedPuzzles]
+  );
+
   return {
     game,
     displayFen,
@@ -464,6 +475,7 @@ export function usePuzzle() {
     totalPuzzles: validPuzzles.length,
     solutionSteps,
     reviewStep,
+    reportedPuzzles,
 
     makeMove,
     showHint,
@@ -476,5 +488,6 @@ export function usePuzzle() {
     stepForward,
     stepBack,
     setReviewStep,
+    reportPuzzle,
   };
 }

@@ -34,6 +34,8 @@ export default function App() {
     stepForward,
     stepBack,
     setReviewStep,
+    reportPuzzle,
+    reportedPuzzles,
   } = usePuzzle();
 
   const [showStats, setShowStats] = useState(false);
@@ -121,6 +123,8 @@ export default function App() {
             onStepBack={stepBack}
             onStepForward={stepForward}
             onSetReviewStep={setReviewStep}
+            onReport={reportPuzzle}
+            reportedPuzzles={reportedPuzzles}
           />
         </div>
 

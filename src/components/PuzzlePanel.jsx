@@ -20,6 +20,8 @@ export default function PuzzlePanel({
   onStepBack,
   onStepForward,
   onSetReviewStep,
+  onReport,
+  reportedPuzzles,
 }) {
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
@@ -212,6 +214,19 @@ export default function PuzzlePanel({
               </button>
             )}
           </>
+        )}
+
+        {puzzle && (status === "completed" || status === "wrong") && (
+          <button
+            className={`btn btn-report ${reportedPuzzles?.includes(puzzle.id) ? "reported" : ""}`}
+            onClick={() => onReport?.(puzzle.id)}
+            disabled={reportedPuzzles?.includes(puzzle.id)}
+            title="Report this puzzle as invalid or incorrect"
+          >
+            {reportedPuzzles?.includes(puzzle.id)
+              ? "Reported — Thanks!"
+              : "Report Bad Puzzle"}
+          </button>
         )}
       </div>
 
