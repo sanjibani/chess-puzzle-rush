@@ -27,9 +27,23 @@ function makePieces() {
 }
 
 function useBoardSize() {
-  const [size, setSize] = useState(() => Math.min(560, window.innerWidth - 40));
+  const [size, setSize] = useState(() => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // On wide screens, use most of the viewport height
+    // On narrow screens, use most of the width
+    const maxByHeight = vh - 100; // leave room for header
+    const maxByWidth = vw > 900 ? vw - 450 : vw - 40; // subtract panel width on desktop
+    return Math.min(maxByHeight, maxByWidth, 800);
+  });
   useEffect(() => {
-    const update = () => setSize(Math.min(560, window.innerWidth - 40));
+    const update = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const maxByHeight = vh - 100;
+      const maxByWidth = vw > 900 ? vw - 450 : vw - 40;
+      setSize(Math.min(maxByHeight, maxByWidth, 800));
+    };
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
